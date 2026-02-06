@@ -29,36 +29,47 @@
     </div>
 
     <script>
-        let map, marker;
-        const tampaCenter = [27.9506, -82.4572]; // Tampa coords
-        
-        map = L.map('map').setView(tampaCenter, 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        
-        function toggleReport() {
-            if (marker) {
-                map.removeLayer(marker);
-                marker = null;
-                document.getElementById('status').innerText = 'Pin removed';
-            } else {
-                marker = L.marker(tampaCenter).addTo(map);
-                document.getElementById('status').innerText = 'Pin dropped – edit details below';
-                document.getElementById('clearReport').style.display = 'block';
-            }
-        }
-        
-        function copyCLEAR() {
-            const agents = prompt('Agents/vehicles (1-10+):') || '?';
-            const desc = prompt('Description:') || '';
-            const now = new Date().toLocaleString();
-            
-            const clearText = `🚨 CLEAR Tampa\nC) ${agents}\nL) [Pin location]\nE) ?\nA) ${desc}\nR) ${now}\n\nNEED VERIFICATION`;
-            
-            navigator.clipboard.writeText(clearText);
-            document.getElementById('clearText').value = clearText;
-            document.getElementById('status').innerText = 'CLEAR copied to clipboard!';
-        }
-    </script>
+  const map = L.map('map').setView([27.9506, -82.4572], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  // load existing pins
+  fetch('/api/pins')
+    .then(res => res.json())
+    .then(pins => {
+      pins.forEach(p => {
+        L.marker([p.lat, p.lng])
+          .addTo(map)
+          .bindPopup(p.message || 'Anonymous pin');
+      });
+    });
+
+  // add new pin
+  map.on('click', async (e) => {
+    const message = prompt("Optional note (anonymous):");
+
+    const res = await fetch('/api/pins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lat: e.latlng.lat,
+        lng: e.latlng.lng,
+        message
+      })
+    });
+
+    const pin = await res.json();
+
+    L.marker([pin.lat, pin.lng])
+      .addTo(map)
+      .bindPopup(pin.message || 'Anonymous pin')
+      .openPopup();
+  });
+</script>
+
 </body>
 </html>
 
