@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tampa ICE Watch – Prototype</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #map { height: 70vh; width: 100%; }
+        .controls { padding: 10px; background: #f0f0f0; }
+        .clear-report { background: red; color: white; padding: 10px; margin: 10px 0; }
+        button { background: #007cba; color: white; border: none; padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h3>🛡️ Tampa ICE Watch – Prototype</h3>
+        <button onclick="toggleReport()">📍 Drop Pin</button>
+        <button onclick="copyCLEAR()">📋 Copy CLEAR Report</button>
+        <div id="status">Ready</div>
+    </div>
+    <div id="map"></div>
+    <div class="clear-report" id="clearReport" style="display:none;">
+        <strong>CLEAR Report (copy to Signal):</strong><br>
+        <textarea id="clearText" rows="4" style="width:100%;"></textarea>
+    </div>
+
+    <script>
+        let map, marker;
+        const tampaCenter = [27.9506, -82.4572]; // Tampa coords
+        
+        map = L.map('map').setView(tampaCenter, 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
+        function toggleReport() {
+            if (marker) {
+                map.removeLayer(marker);
+                marker = null;
+                document.getElementById('status').innerText = 'Pin removed';
+            } else {
+                marker = L.marker(tampaCenter).addTo(map);
+                document.getElementById('status').innerText = 'Pin dropped – edit details below';
+                document.getElementById('clearReport').style.display = 'block';
+            }
+        }
+        
+        function copyCLEAR() {
+            const agents = prompt('Agents/vehicles (1-10+):') || '?';
+            const desc = prompt('Description:') || '';
+            const now = new Date().toLocaleString();
+            
+            const clearText = `🚨 CLEAR Tampa\nC) ${agents}\nL) [Pin location]\nE) ?\nA) ${desc}\nR) ${now}\n\nNEED VERIFICATION`;
+            
+            navigator.clipboard.writeText(clearText);
+            document.getElementById('clearText').value = clearText;
+            document.getElementById('status').innerText = 'CLEAR copied to clipboard!';
+        }
+    </script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Anonymous Community Map</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // Initialize map (Tampa-ish)
+    const map = L.map('map').setView([27.9506, -82.4572], 12);
+
+    // OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Click-to-drop anonymous pin
+    map.on('click', function (e) {
+      L.marker(e.latlng)
+        .addTo(map)
+        .bindPopup("Anonymous pin")
+        .openPopup();
+    });
+  </script>
+
+</body>
+</html>
